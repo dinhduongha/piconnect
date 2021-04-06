@@ -145,7 +145,7 @@ export const popupMessageListener = (request: Request) => {
   const createAccount = async () => {
     const { password } = request;
 
-    const mnemonicPhrase = generateMnemonic({ entropyBits: 128 });
+    const mnemonicPhrase = generateMnemonic({ entropyBits: 256 });
     const wallet = fromMnemonic(mnemonicPhrase);
 
     const KEY_DERIVATION_NUMBER = 0;

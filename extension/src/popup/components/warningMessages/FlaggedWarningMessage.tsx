@@ -57,7 +57,7 @@ const MemoWarningMessage = ({ isMemoRequired }: { isMemoRequired: boolean }) =>
     >
       <p>
         A destination account requires the use of the memo field which is not
-        present in the transaction you’re about to sign. Freighter automatically
+        present in the transaction you’re about to sign. PiConnect automatically
         disabled the option to sign this transaction.
       </p>
 

@@ -72,20 +72,20 @@ export const ImportAccount = () => {
   return (
     <>
       <SubviewWrapper>
-        <SubviewHeader headerText="Import Stellar secret key" />
+        <SubviewHeader headerText="Import PI secret key" />
         <WarningMessage
           icon={IconOrangeLock}
           subheader="Read before importing your key"
         >
           <ul>
             <li>
-              Freighter <strong>can’t recover</strong> your imported secret key
+              PiConnect <strong>can’t recover</strong> your imported secret key
               using your backup phrase. Storing your secret key is your
               reponsibility
             </li>
 
             <li>
-              Freighter <strong>will never ask</strong> for your secret key
+              PiConnect <strong>will never ask</strong> for your secret key
               outside of the extension
             </li>
           </ul>
@@ -105,7 +105,7 @@ export const ImportAccount = () => {
                     clearImportAccountError(e);
                     handleChange(e);
                   }}
-                  placeholder="Your Stellar secret key"
+                  placeholder="Your PI secret key"
                   type="password"
                 />
                 <Error name="privateKey" />
@@ -126,7 +126,7 @@ export const ImportAccount = () => {
               </FormRow>
               <FormRow>
                 <CheckboxField
-                  label="I’m aware Freighter can’t recover the imported  secret key"
+                  label="I’m aware PiConnect can’t recover the imported  secret key"
                   name="authorization"
                 />
                 <Error name="authorization" />

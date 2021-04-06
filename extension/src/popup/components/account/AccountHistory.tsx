@@ -76,9 +76,7 @@ const FullHistoryBtnEl = styled(BasicButton)`
   text-align: center;
 `;
 
-const STELLAR_EXPERT_URL = `https://stellar.expert/explorer/${
-  isTestnet ? "testnet" : "public"
-}`;
+const STELLAR_EXPERT_URL = `https://piquorum.com${isTestnet ? "" : ""}`;
 
 interface PaymentInfoProps {
   amount: string;
@@ -95,7 +93,7 @@ const PaymentInfo = ({
   <>
     <PaymentEl>
       {isRecipient ? "+" : "-"}
-      {amount} {assetCode || "XLM"}
+      {amount} {assetCode || "PI"}
     </PaymentEl>
     <HistoryColumnRowEl>
       <KeyIdenticon isSmall publicKey={otherAccount} />
@@ -150,7 +148,7 @@ const HistoryItem = ({
     <HistoryItemEl
       onClick={() => {
         emitMetric(METRIC_NAMES.historyOpenItem);
-        openTab(`${STELLAR_EXPERT_URL}/op/${id}`);
+        openTab(`https://api.testnet.minepi.com/operations/${id}`);
       }}
     >
       <HistoryColumnEl>
@@ -167,7 +165,7 @@ const HistoryItem = ({
         </HistoryColumnRowEl>
       </HistoryColumnEl>
       <PaymentColumnEl>{renderPaymentComponent()}</PaymentColumnEl>
-      <OpenExternalIconEl src={IconOpenExternal} alt="open in stellar.expert" />
+      <OpenExternalIconEl src={IconOpenExternal} alt="open in PiQuorum" />
     </HistoryItemEl>
   );
 };
@@ -195,7 +193,7 @@ export const AccountHistory = ({
         openTab(`${STELLAR_EXPERT_URL}/account/${publicKey}`);
       }}
     >
-      Check full history on stellar.expert
+      Check full history on PiQuorum
     </FullHistoryBtnEl>
   </>
 );

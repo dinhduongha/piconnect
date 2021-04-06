@@ -11,7 +11,9 @@ import { BasicButton } from "popup/basics/Buttons";
 import { Form, TextField } from "popup/basics/Forms";
 
 import { POPUP_WIDTH } from "constants/dimensions";
+/*
 import { NETWORK_NAME } from "@shared/constants/stellar";
+*/
 import { ROUTES } from "popup/constants/routes";
 import {
   COLOR_PALETTE,
@@ -228,14 +230,12 @@ export const ViewPublicKey = () => {
         </CopiedToastWrapperEl>
         <LinkButton
           onClick={() => {
-            openTab(
-              `https://stellar.expert/explorer/${NETWORK_NAME.toLowerCase()}/account/${publicKey}`,
-            );
+            openTab(`https://piquorum.com/account/${publicKey}`);
             emitMetric(METRIC_NAMES.viewPublicKeyClickedStellarExpert);
           }}
         >
-          <img src={StellarExpertIcon} alt="view on StellarExpert button" />
-          View on StellarExpert
+          <img src={StellarExpertIcon} alt="view on PiQuorum button" />
+          View on PiQuorum
         </LinkButton>
       </ButtonsEl>
     </QrEl>

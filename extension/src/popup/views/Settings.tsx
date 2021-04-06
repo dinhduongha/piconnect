@@ -69,8 +69,8 @@ export const Settings = () => {
                 name="isDataSharingAllowed"
                 label={
                   <span>
-                    Allow Freighter to collect anonymous information about
-                    usage. Freighter will never collect your personal
+                    Allow PiConnect to collect anonymous information about
+                    usage. PiConnect will never collect your personal
                     information such as IP address, keys, balance or transaction
                     amounts.
                   </span>

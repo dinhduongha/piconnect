@@ -5,7 +5,7 @@ import { NETWORK_NAME } from "@shared/constants/stellar";
 import { HEADER_HEIGHT } from "constants/dimensions";
 import { FONT_FAMILY, COLOR_PALETTE } from "popup/constants/styles";
 
-import FreighterLogoLockup from "popup/assets/logo-lockup-freighter.svg";
+import FreighterLogoLockup from "popup/assets/pi-logo.svg";
 
 const HeaderEl = styled.header`
   background: ${COLOR_PALETTE.primaryGradient};
@@ -45,7 +45,7 @@ type HeaderProps = {
 
 export const Header = ({ children, className, ...props }: HeaderProps) => (
   <HeaderEl className={className} {...props}>
-    <FreighterLogoEl alt="Freighter logo" src={FreighterLogoLockup} />
+    <FreighterLogoEl alt="PiConnect logo" src={FreighterLogoLockup} />
     <RightSectionEl>
       {children}
       <NetworkEl>{NETWORK_NAME}</NetworkEl>

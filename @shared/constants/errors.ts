@@ -1,3 +1,3 @@
 export class NoExtensionInstalledError extends Error {
-  message = "Freighter does not appear to be installed.";
+  message = "PiConnect does not appear to be installed.";
 }

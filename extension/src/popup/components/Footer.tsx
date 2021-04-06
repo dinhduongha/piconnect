@@ -3,14 +3,18 @@ import styled from "styled-components";
 
 import { COLOR_PALETTE, FONT_WEIGHT } from "popup/constants/styles";
 
+/*
 import { RetinaImg } from "popup/basics/Images";
 
+import wepiLogo from "popup/assets/stellar-logo.png";
+import wepiLogo2x from "popup/assets/stellar-logo.png";
 import accountViewerLogo from "popup/assets/logo-av.png";
 import accountViewerLogo2x from "popup/assets/logo-av@2x.png";
 import laboratoryLogo from "popup/assets/logo-laboratory.png";
 import laboratoryLogo2x from "popup/assets/logo-laboratory@2x.png";
 import stellarTermLogo from "popup/assets/logo-stellarterm.png";
 import stellarTermLogo2x from "popup/assets/logo-stellarterm@2x.png";
+*/
 
 const FooterEl = styled.footer`
   box-sizing: border-box;
@@ -43,41 +47,16 @@ const FooterListItemEl = styled.li`
 
 export const Footer = () => (
   <FooterEl>
-    <FooterHeaderEl>Use Freighter with</FooterHeaderEl>
+    <FooterHeaderEl>Use PiConnect with</FooterHeaderEl>
     <FooterListEl>
       <FooterListItemEl>
-        <a
-          href="https://accountviewer.stellar.org"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <RetinaImg
-            retina={accountViewerLogo2x}
-            src={accountViewerLogo}
-            alt="Stellar Account Viewer logo"
-          />
+        <a href="https://wepi.vn" target="_blank" rel="noreferrer">
+          WePi.vn
         </a>
       </FooterListItemEl>
       <FooterListItemEl>
-        <a
-          href="https://laboratory.stellar.org"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <RetinaImg
-            retina={laboratoryLogo2x}
-            src={laboratoryLogo}
-            alt="Stellar Laboratory logo"
-          />
-        </a>
-      </FooterListItemEl>
-      <FooterListItemEl>
-        <a href="https://stellarterm.com" target="_blank" rel="noreferrer">
-          <RetinaImg
-            retina={stellarTermLogo2x}
-            src={stellarTermLogo}
-            alt="StellarTerm logo"
-          />
+        <a href="https://piconnect.org" target="_blank" rel="noreferrer">
+          PiConnect.org
         </a>
       </FooterListItemEl>
     </FooterListEl>

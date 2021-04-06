@@ -316,7 +316,7 @@ const authSlice = createSlice({
     });
     builder.addCase(makeAccountActive.rejected, (state, action) => {
       const {
-        message = "Freighter was unable to switch to this account",
+        message = "PiConnect was unable to switch to this account",
       } = action.error;
 
       return {
@@ -336,7 +336,7 @@ const authSlice = createSlice({
     });
     builder.addCase(updateAccountName.rejected, (state, action) => {
       const {
-        message = "Freighter was unable update this account's name",
+        message = "PiConnect was unable update this account's name",
       } = action.error;
 
       return {

@@ -135,7 +135,7 @@ export const RecoverAccount = () => {
                       clearMnemonicPhraseError(e);
                       handleChange(e);
                     }}
-                    placeholder="Enter your 12 word phrase to restore your wallet"
+                    placeholder="Enter your 24 word phrase to restore your wallet"
                   />
                   <Error name="mnemonicPhrase" />
                   <ApiErrorMessage error={authError}></ApiErrorMessage>

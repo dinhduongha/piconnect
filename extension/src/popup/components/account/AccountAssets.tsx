@@ -55,7 +55,7 @@ const AssetIcon = ({
   issuerKey: string;
   retryAssetIconFetch: (arg: { key: string; code: string }) => void;
 }) =>
-  assetIcons[code] || code === "XLM" ? (
+  assetIcons[code] || code === "PI" ? (
     <AssetLogoEl
       alt={`${code} logo`}
       src={code === "XLM" ? StellarLogo : assetIcons[code] || ""}
@@ -86,7 +86,8 @@ export const AccountAssets = ({
           retryAssetIconFetch={retryAssetIconFetch}
         />
         <LumenBalanceEl>
-          {new BigNumber(total).toString()} <AssetTypeEl>{code}</AssetTypeEl>
+          {new BigNumber(total).toString()}{" "}
+          <AssetTypeEl>{code === "XLM" ? "PI" : code}</AssetTypeEl>
         </LumenBalanceEl>
       </AssetEl>
     ))}

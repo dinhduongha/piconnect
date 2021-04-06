@@ -72,7 +72,7 @@ const SubmitButtonEl = styled(SubmitButton)`
 
 const NetworkMismatchWarning = () => (
   <>
-    <WarningMessage subheader={`Freighter is currently on ${NETWORK_NAME}`}>
+    <WarningMessage subheader={`PiConnect is currently on ${NETWORK_NAME}`}>
       <p>The transaction you’re trying to sign is on {OTHER_NETWORK_NAME}.</p>
       <p>Signing this transaction is not possible at the moment.</p>
     </WarningMessage>
@@ -198,7 +198,7 @@ export const SignTransaction = () => {
               <div>
                 <strong>Base fee:</strong>
               </div>
-              <div> {stroopToXlm(_fee)} XLM</div>
+              <div> {stroopToXlm(_fee)} PI</div>
             </li>
           ) : null}
           <li>

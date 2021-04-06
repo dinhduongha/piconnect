@@ -114,7 +114,7 @@ export const Welcome = () => (
       <RowScreenEl>
         <LargeHeadingEl>
           Welcome, <br />
-          are you new to <strong>Freighter?</strong>
+          are you new to <strong>PiConnect?</strong>
         </LargeHeadingEl>
       </RowScreenEl>
       <RowScreenEl>
@@ -138,7 +138,7 @@ export const Welcome = () => (
               <img src={ImportWalletIllo} alt="Import Wallet Illustration" />
             </IlloContainerEl>
             <HeadingEl>I’ve done this before</HeadingEl>
-            <p>I have my 12 word seed phrase</p>
+            <p>I have my 24 word seed phrase</p>
             <LinkButtonWrapperEl>
               <ImportButtonEl to={ROUTES.recoverAccount}>
                 Import wallet

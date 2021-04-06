@@ -114,17 +114,17 @@ const MnemonicPhraseConfirmedMessage = () => (
       </MessageSubheaderEl>
       <MessageListEl>
         <li>
-          Freighter will <strong>never ask for your backup phrase</strong>{" "}
+          PiConnect will <strong>never ask for your backup phrase</strong>{" "}
           unless you're actively importing your account using the browser
           extension. We will never ask for your backup phrase on an external
           website.
         </li>
         <li>
-          Always check the domain of websites you're using Freighter with to
+          Always check the domain of websites you're using PiConnect with to
           make sure you’re interacting with the authentic site.
         </li>
         <li>
-          Freighter cannot recover your account if you lose your backup phrase,
+          PiConnect cannot recover your account if you lose your backup phrase,
           so keep it safe and secure.
         </li>
       </MessageListEl>
@@ -137,7 +137,7 @@ const RecoverAccountSuccessMessage = () => (
     <p>You successfully imported your account.</p>
     <p>
       <strong>
-        Check your account details by clicking on the Freighter icon on your
+        Check your account details by clicking on the PiConnect icon on your
         browser.
       </strong>
     </p>

@@ -42,24 +42,11 @@ const NotFundedHeaderEl = styled.h3`
 
 export const NotFundedMessage = () => (
   <NotFundedWrapperEl>
-    <NotFundedHeaderEl>This Stellar address is not funded</NotFundedHeaderEl>
-    <p>To create this account, fund it with a minimum of 1 XLM.</p>
+    <NotFundedHeaderEl>This PI address is not funded</NotFundedHeaderEl>
+    <p>To create account, join Pi Network !</p>
     <p>
-      <a
-        href="https://developers.stellar.org/docs/tutorials/create-account/#create-account"
-        rel="noreferrer"
-        target="_blank"
-      >
-        Learn more about account creation
-      </a>
-    </p>
-    <p>
-      <a
-        href="https://www.stellar.org/lumens/exchanges"
-        rel="noreferrer"
-        target="_blank"
-      >
-        See where you can buy lumens
+      <a href="https://minepi.com/bibupbin" rel="noreferrer" target="_blank">
+        Click here to join !
       </a>
     </p>
   </NotFundedWrapperEl>

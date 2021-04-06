@@ -143,7 +143,7 @@ export const Menu = () => {
               <a
                 rel="noreferrer"
                 target="_blank"
-                href="http://freighter.app/help"
+                href="https://piconnect.org/help"
               >
                 Help
               </a>
@@ -152,7 +152,7 @@ export const Menu = () => {
               <a
                 rel="noreferrer"
                 target="_blank"
-                href="https://stellarform.typeform.com/to/r4FiNpX1"
+                href="https://piconnect.org/contact"
               >
                 Leave Feedback
               </a>
