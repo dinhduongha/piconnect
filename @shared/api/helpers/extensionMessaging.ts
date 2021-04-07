@@ -9,7 +9,7 @@ import { NoExtensionInstalledError } from "../../constants/errors";
 
 declare global {
   interface Window {
-    freighter: boolean;
+    piconnect: boolean;
   }
 }
 
@@ -21,7 +21,7 @@ export const sendMessageToContentScript = (msg: {}): Promise<Response> => {
     window.location.origin,
   );
   return new Promise((resolve, reject) => {
-    if (!window.freighter) {
+    if (!window.piconnect) {
       reject(new NoExtensionInstalledError());
     }
 
