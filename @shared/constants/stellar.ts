@@ -3,7 +3,7 @@ import StellarSdk from "stellar-sdk";
 declare const PRODUCTION: boolean;
 
 const TESTNET = "Pi Testnet";
-const PUBNET = "Pi Network";
+const PUBNET = "Pi Testnet";
 
 export const isTestnet = !PRODUCTION;
 

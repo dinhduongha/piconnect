@@ -126,7 +126,7 @@ export const Welcome = () => (
             <HeadingEl>I’m new!</HeadingEl>
             <p>I’m going to need a seed phrase</p>
             <LinkButtonWrapperEl>
-              <CreateButtonEl to={ROUTES.accountCreator}>
+              <CreateButtonEl to="#" style={{ cursor: "not-allowed" }}>
                 Create wallet
               </CreateButtonEl>
             </LinkButtonWrapperEl>
@@ -138,7 +138,7 @@ export const Welcome = () => (
               <img src={ImportWalletIllo} alt="Import Wallet Illustration" />
             </IlloContainerEl>
             <HeadingEl>I’ve done this before</HeadingEl>
-            <p>I have my 24 word seed phrase</p>
+            <p>I have my 24 word seed phrase from Pi Network</p>
             <LinkButtonWrapperEl>
               <ImportButtonEl to={ROUTES.recoverAccount}>
                 Import wallet
