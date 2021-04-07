@@ -202,7 +202,7 @@ export const AccountHistory = ({
           openTab(`${STELLAR_EXPERT_URL}/account/${publicKey}`);
         }}
       >
-        Check full history on stellar.expert
+        Check full history on PiQuorum
       </FullHistoryBtnEl>
     </>
   );
