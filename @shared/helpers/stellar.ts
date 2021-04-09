@@ -15,6 +15,7 @@ export interface NetworkDetails {
 }
 
 export const MAINNET_NETWORK_DETAILS = {
+  isTestnet: false,
   network: "PUBLIC",
   networkName: PUBNET,
   otherNetworkName: TESTNET,
@@ -23,6 +24,7 @@ export const MAINNET_NETWORK_DETAILS = {
 } as NetworkDetails;
 
 export const TESTNET_NETWORK_DETAILS = {
+  isTestnet: true,
   network: "TESTNET",
   networkName: TESTNET,
   otherNetworkName: PUBNET,
@@ -30,25 +32,5 @@ export const TESTNET_NETWORK_DETAILS = {
   networkPassphrase: StellarSdk.Networks.TESTNET,
 } as NetworkDetails;
 
-export const getNetworkDetails = (isTestnet: boolean) => {
-  const detailsObj = isTestnet
-    ? { ...TESTNET_NETWORK_DETAILS }
-    : { ...MAINNET_NETWORK_DETAILS };
-
-  const {
-    network,
-    networkName,
-    otherNetworkName,
-    networkUrl,
-    networkPassphrase,
-  } = detailsObj;
-
-  return {
-    isTestnet,
-    network,
-    networkName,
-    otherNetworkName,
-    networkUrl,
-    networkPassphrase,
-  };
-};
+export const getNetworkDetails = (isTestnet: boolean) =>
+  isTestnet ? { ...TESTNET_NETWORK_DETAILS } : { ...MAINNET_NETWORK_DETAILS };
