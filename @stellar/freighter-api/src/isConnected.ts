@@ -1,7 +1,7 @@
 declare global {
   interface Window {
-    freighter: boolean;
+    piconnect: boolean;
   }
 }
 
-export const isConnected = () => !!window.freighter;
+export const isConnected = () => !!window.piconnect;
