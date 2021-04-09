@@ -20,7 +20,7 @@ export const MAINNET_NETWORK_DETAILS = {
   networkName: PUBNET,
   otherNetworkName: TESTNET,
   networkUrl: "https://api.testnet.minepi.com",
-  networkPassphrase: StellarSdk.Networks.PUBLIC,
+  networkPassphrase: "Pi Testnet",
 } as NetworkDetails;
 
 export const TESTNET_NETWORK_DETAILS = {
@@ -29,7 +29,7 @@ export const TESTNET_NETWORK_DETAILS = {
   networkName: TESTNET,
   otherNetworkName: PUBNET,
   networkUrl: "https://api.testnet.minepi.com",
-  networkPassphrase: StellarSdk.Networks.TESTNET,
+  networkPassphrase: "Pi Testnet",
 } as NetworkDetails;
 
 export const getNetworkDetails = (isTestnet: boolean) =>

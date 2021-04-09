@@ -289,7 +289,7 @@ export const Operations = ({
               {asset ? (
                 <KeyValueList
                   operationKey="Asset"
-                  operationValue={`${asset.code}`}
+                  operationValue={`${asset.code === "XLM" ? "PI" : asset.code}`}
                 />
               ) : null}
 
