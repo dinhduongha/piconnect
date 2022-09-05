@@ -5,6 +5,7 @@ import { fromMnemonic, generateMnemonic } from "stellar-hd-wallet";
 
 import { SERVICE_TYPES } from "@shared/constants/services";
 import { APPLICATION_STATE } from "@shared/constants/applicationState";
+import { WalletType } from "@shared/constants/hardwareWallet";
 
 import { Account, Response as Request } from "@shared/api/types";
 import { MessageResponder } from "background/types";
@@ -15,9 +16,12 @@ import {
   CACHED_ASSET_ICONS_ID,
   DATA_SHARING_ID,
   IS_TESTNET_ID,
+  IS_VALIDATING_MEMO_ID,
+  IS_VALIDATING_SAFETY_ID,
   KEY_DERIVATION_NUMBER_ID,
   KEY_ID,
   KEY_ID_LIST,
+  RECENT_ADDRESSES,
 } from "constants/localStorageTypes";
 
 import { getPunycodedDomain, getUrlHostname } from "helpers/urls";
@@ -26,6 +30,11 @@ import {
   getAccountNameList,
   getKeyIdList,
   getIsTestnet,
+  getIsMemoValidationEnabled,
+  getIsSafetyValidationEnabled,
+  getIsHardwareWalletActive,
+  HW_PREFIX,
+  getBipPath,
 } from "background/helpers/account";
 import { getNetworkDetails } from "@shared/helpers/stellar";
 import { SessionTimer } from "background/helpers/session";
@@ -40,6 +49,7 @@ import {
   mnemonicPhraseSelector,
   publicKeySelector,
   setActivePublicKey,
+  setActivePrivateKey,
   timeoutAccountAccess,
   updateAllAccountsAccountName,
 } from "background/ducks/session";
@@ -65,8 +75,84 @@ export const popupMessageListener = (request: Request) => {
   });
   keyManager.registerEncrypter(KeyManagerPlugins.ScryptEncrypter);
 
-  const _unlockKeystore = ({ password }: { password: string }) =>
-    keyManager.loadKey(localStorage.getItem(KEY_ID) || "", password);
+  const _unlockKeystore = ({
+    password,
+    keyID,
+  }: {
+    password: string;
+    keyID: string;
+  }) => keyManager.loadKey(keyID, password);
+
+  // this returns the first non hardware wallet (Hw) keyID, if it exists.
+  // Used for things like checking a password when a Hw is active.
+  const _getNonHwKeyID = () => {
+    const keyIdList = getKeyIdList();
+    const nonHwKeyIds = keyIdList.filter(
+      (k: string) => k.indexOf(HW_PREFIX) === -1,
+    );
+    return nonHwKeyIds[0] || "";
+  };
+
+  // in lieu of using KeyManager, let's store hW data in local storage
+  // using schema:
+  // "hw:<G account>": {
+  //   publicKey: "",
+  //   bipPath: "",
+  // }
+  const _storeHardwareWalletAccount = ({
+    publicKey,
+    hardwareWalletType,
+    bipPath,
+  }: {
+    publicKey: string;
+    hardwareWalletType: WalletType;
+    bipPath: string;
+  }) => {
+    const mnemonicPhrase = mnemonicPhraseSelector(store.getState());
+    let allAccounts = allAccountsSelector(store.getState());
+
+    const keyId = `${HW_PREFIX}${publicKey}`;
+    const keyIdListArr = getKeyIdList();
+    const accountName = `${hardwareWalletType} ${
+      keyIdListArr.filter((k: string) => k.indexOf(HW_PREFIX) !== -1).length + 1
+    }`;
+
+    if (keyIdListArr.indexOf(keyId) === -1) {
+      keyIdListArr.push(keyId);
+      localStorage.setItem(KEY_ID_LIST, JSON.stringify(keyIdListArr));
+      const hwData = {
+        bipPath,
+        publicKey,
+      };
+      localStorage.setItem(keyId, JSON.stringify(hwData));
+      addAccountName({
+        keyId,
+        accountName,
+      });
+      allAccounts = [
+        ...allAccounts,
+        {
+          publicKey,
+          name: accountName,
+          imported: true,
+          hardwareWalletType,
+        },
+      ];
+    }
+
+    localStorage.setItem(KEY_ID, keyId);
+
+    store.dispatch(
+      logIn({
+        publicKey,
+        mnemonicPhrase,
+        allAccounts,
+      }),
+    );
+
+    // an active hw account should not have an active private key
+    store.dispatch(setActivePrivateKey({ privateKey: "" }));
+  };
 
   const _storeAccount = async ({
     mnemonicPhrase,
@@ -130,9 +216,10 @@ export const popupMessageListener = (request: Request) => {
     });
   };
 
-  const _fundAccount = async (publicKey: string) => {
+  const fundAccount = async () => {
+    const { publicKey } = request;
+
     if (getIsTestnet()) {
-      // fund the account automatically if we're in a dev environment
       try {
         await fetch(
           `https://friendbot.stellar.org?addr=${encodeURIComponent(publicKey)}`,
@@ -142,6 +229,8 @@ export const popupMessageListener = (request: Request) => {
         throw new Error("Error creating account");
       }
     }
+
+    return { publicKey };
   };
 
   const createAccount = async () => {
@@ -151,8 +240,6 @@ export const popupMessageListener = (request: Request) => {
     const wallet = fromMnemonic(mnemonicPhrase);
 
     const KEY_DERIVATION_NUMBER = 0;
-
-    await _fundAccount(wallet.getPublicKey(KEY_DERIVATION_NUMBER));
 
     localStorage.setItem(
       KEY_DERIVATION_NUMBER_ID,
@@ -187,8 +274,12 @@ export const popupMessageListener = (request: Request) => {
       return { error: "Mnemonic phrase not found" };
     }
 
+    const keyID = getIsHardwareWalletActive()
+      ? _getNonHwKeyID()
+      : localStorage.getItem(KEY_ID) || "";
+
     try {
-      await _unlockKeystore({ password });
+      await _unlockKeystore({ keyID, password });
     } catch (e) {
       console.error(e);
       return { error: "Incorrect password" };
@@ -197,7 +288,6 @@ export const popupMessageListener = (request: Request) => {
     const wallet = fromMnemonic(mnemonicPhrase);
     const keyNumber =
       Number(localStorage.getItem(KEY_DERIVATION_NUMBER_ID)) + 1;
-    await _fundAccount(wallet.getPublicKey(keyNumber));
 
     const keyPair = {
       publicKey: wallet.getPublicKey(keyNumber),
@@ -214,20 +304,27 @@ export const popupMessageListener = (request: Request) => {
 
     store.dispatch(timeoutAccountAccess());
 
+    sessionTimer.startSession();
+    store.dispatch(setActivePrivateKey({ privateKey: keyPair.privateKey }));
+
     const currentState = store.getState();
 
     return {
       publicKey: publicKeySelector(currentState),
       allAccounts: allAccountsSelector(currentState),
+      hasPrivateKey: hasPrivateKeySelector(currentState),
     };
   };
 
   const importAccount = async () => {
     const { password, privateKey } = request;
     let sourceKeys;
+    const keyID = getIsHardwareWalletActive()
+      ? _getNonHwKeyID()
+      : localStorage.getItem(KEY_ID) || "";
 
     try {
-      await _unlockKeystore({ password });
+      await _unlockKeystore({ keyID, password });
       sourceKeys = StellarSdk.Keypair.fromSecret(privateKey);
     } catch (e) {
       console.error(e);
@@ -252,13 +349,32 @@ export const popupMessageListener = (request: Request) => {
       imported: true,
     });
 
-    sessionTimer.startSession({ privateKey });
+    sessionTimer.startSession();
+    store.dispatch(setActivePrivateKey({ privateKey }));
 
     const currentState = store.getState();
 
     return {
       publicKey: publicKeySelector(currentState),
       allAccounts: allAccountsSelector(currentState),
+      hasPrivateKey: hasPrivateKeySelector(currentState),
+    };
+  };
+
+  const importHardwareWallet = async () => {
+    const { publicKey, hardwareWalletType, bipPath } = request;
+
+    await _storeHardwareWalletAccount({
+      publicKey,
+      hardwareWalletType,
+      bipPath,
+    });
+
+    return {
+      publicKey: publicKeySelector(store.getState()),
+      allAccounts: allAccountsSelector(store.getState()),
+      hasPrivateKey: hasPrivateKeySelector(store.getState()),
+      bipPath: getBipPath(),
     };
   };
 
@@ -284,6 +400,7 @@ export const popupMessageListener = (request: Request) => {
     return {
       publicKey: publicKeySelector(currentState),
       hasPrivateKey: hasPrivateKeySelector(currentState),
+      bipPath: getBipPath(),
     };
   };
 
@@ -309,6 +426,7 @@ export const popupMessageListener = (request: Request) => {
       publicKey: publicKeySelector(currentState),
       applicationState: localStorage.getItem(APPLICATION_ID) || "",
       allAccounts: allAccountsSelector(currentState),
+      bipPath: getBipPath(),
     };
   };
 
@@ -360,6 +478,10 @@ export const popupMessageListener = (request: Request) => {
         APPLICATION_STATE.MNEMONIC_PHRASE_CONFIRMED;
 
       localStorage.setItem(APPLICATION_ID, applicationState);
+
+      // start the timer now that we have active private key
+      sessionTimer.startSession();
+      store.dispatch(setActivePrivateKey({ privateKey: keyPair.privateKey }));
     }
 
     const currentState = store.getState();
@@ -368,6 +490,7 @@ export const popupMessageListener = (request: Request) => {
       allAccounts: allAccountsSelector(currentState),
       publicKey: publicKeySelector(currentState),
       applicationState: localStorage.getItem(APPLICATION_ID) || "",
+      hasPrivateKey: hasPrivateKeySelector(currentState),
     };
   };
 
@@ -375,11 +498,60 @@ export const popupMessageListener = (request: Request) => {
     const { password } = request;
 
     try {
-      await _unlockKeystore({ password });
+      await _unlockKeystore({
+        keyID: localStorage.getItem(KEY_ID) || "",
+        password,
+      });
       return {};
     } catch (e) {
       return { error: "Incorrect Password" };
     }
+  };
+
+  const _getLocalStorageAccounts = async (password: string) => {
+    const keyIdList = getKeyIdList();
+    const accountNameList = getAccountNameList();
+    const unlockedAccounts = [] as Array<Account>;
+
+    // for loop to preserve order of accounts
+    // eslint-disable-next-line no-plusplus
+    for (let i = 0; i < keyIdList.length; i++) {
+      const keyId = keyIdList[i];
+      let keyStore;
+
+      // iterate over each keyId we have and get the associated keystore
+      let publicKey = "";
+      let imported = false;
+      let hardwareWalletType = WalletType.NONE;
+
+      if (keyId.indexOf(HW_PREFIX) !== -1) {
+        publicKey = keyId.split(":")[1];
+        imported = true;
+        // all hardware wallets are ledgers for now
+        hardwareWalletType = WalletType.LEDGER;
+      } else {
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          keyStore = await keyManager.loadKey(keyId, password);
+        } catch (e) {
+          console.error(e);
+        }
+
+        publicKey = keyStore?.publicKey || "";
+        imported = keyStore?.extra.imported || false;
+      }
+
+      if (publicKey) {
+        // push the data into a list of accounts
+        unlockedAccounts.push({
+          publicKey,
+          name: accountNameList[keyId] || `Account ${keyIdList.length}`,
+          imported,
+          hardwareWalletType,
+        });
+      }
+    }
+    return unlockedAccounts;
   };
 
   const confirmPassword = async () => {
@@ -402,11 +574,23 @@ export const popupMessageListener = (request: Request) => {
     }
     /* end migration script */
 
+    // if active hw then use the first non-hw keyID to check password
+    // with keyManager
+    let keyID = localStorage.getItem(KEY_ID) || "";
+    let hwPublicKey = "";
+    if (getIsHardwareWalletActive()) {
+      hwPublicKey = keyID.split(":")[1];
+      keyID = _getNonHwKeyID();
+    }
+
     let activeAccountKeystore;
 
     // first make sure the password is correct to get active keystore, short circuit if not
     try {
-      activeAccountKeystore = await _unlockKeystore({ password });
+      activeAccountKeystore = await _unlockKeystore({
+        keyID,
+        password,
+      });
     } catch (e) {
       console.error(e);
       return { error: "Could not log into selected account" };
@@ -420,9 +604,6 @@ export const popupMessageListener = (request: Request) => {
 
     const activeMnemonicPhrase = activeExtra.mnemonicPhrase;
 
-    const accountNameList = getAccountNameList();
-    const unlockedAccounts = [] as Array<Account>;
-
     if (
       !publicKeySelector(store.getState()) ||
       !allAccountsSelector(store.getState()).length
@@ -431,50 +612,27 @@ export const popupMessageListener = (request: Request) => {
       // construct allAccounts from local storage
       // log the user in using all accounts and public key/phrase from above to create the store
 
-      // for loop to preserve order of accounts
-      // eslint-disable-next-line no-plusplus
-      for (let i = 0; i < keyIdList.length; i++) {
-        const keyId = keyIdList[i];
-        let keyStore;
-
-        // iterate over each keyId we have and get the associated keystore
-        try {
-          // eslint-disable-next-line no-await-in-loop
-          keyStore = await keyManager.loadKey(keyId, password);
-        } catch (e) {
-          console.error(e);
-        }
-
-        if (keyStore) {
-          // push the data into a list of accounts
-
-          const { publicKey, extra = { mnemonicPhrase: "" } } = keyStore;
-          const { imported = false } = extra;
-          unlockedAccounts.push({
-            publicKey,
-            name: accountNameList[keyId] || `Account ${keyIdList.length}`,
-            imported,
-          });
-        }
-      }
-
       store.dispatch(
         logIn({
-          publicKey: activePublicKey,
+          publicKey: hwPublicKey || activePublicKey,
           mnemonicPhrase: activeMnemonicPhrase,
-          allAccounts: unlockedAccounts,
+          allAccounts: await _getLocalStorageAccounts(password),
         }),
       );
     }
 
     // start the timer now that we have active private key
-    sessionTimer.startSession({ privateKey: activePrivateKey });
+    sessionTimer.startSession();
+    if (!getIsHardwareWalletActive()) {
+      store.dispatch(setActivePrivateKey({ privateKey: activePrivateKey }));
+    }
 
     return {
       publicKey: publicKeySelector(store.getState()),
       hasPrivateKey: hasPrivateKeySelector(store.getState()),
       applicationState: localStorage.getItem(APPLICATION_ID) || "",
       allAccounts: allAccountsSelector(store.getState()),
+      bipPath: getBipPath(),
     };
   };
 
@@ -504,6 +662,19 @@ export const popupMessageListener = (request: Request) => {
     if (response) {
       response();
     }
+  };
+
+  const handleSignedHwTransaction = () => {
+    const { signedTransaction } = request;
+
+    const transactionResponse = responseQueue.pop();
+
+    if (typeof transactionResponse === "function") {
+      transactionResponse(signedTransaction);
+      return {};
+    }
+
+    return { error: "Session timed out" };
   };
 
   const signTransaction = () => {
@@ -540,6 +711,41 @@ export const popupMessageListener = (request: Request) => {
     }
   };
 
+  const signFreighterTransaction = () => {
+    const { transactionXDR, network } = request;
+    const transaction = StellarSdk.TransactionBuilder.fromXDR(
+      transactionXDR,
+      network,
+    );
+
+    const privateKey = privateKeySelector(store.getState());
+    if (privateKey.length) {
+      const sourceKeys = StellarSdk.Keypair.fromSecret(privateKey);
+      transaction.sign(sourceKeys);
+      return { signedTransaction: transaction.toXDR() };
+    }
+
+    return { error: "Session timed out" };
+  };
+
+  const addRecentAddress = () => {
+    const { publicKey } = request;
+    const storedJSON = localStorage.getItem(RECENT_ADDRESSES) || "[]";
+    const recentAddresses = JSON.parse(storedJSON);
+    if (recentAddresses.indexOf(publicKey) === -1) {
+      recentAddresses.push(publicKey);
+    }
+    localStorage.setItem(RECENT_ADDRESSES, JSON.stringify(recentAddresses));
+
+    return { recentAddresses };
+  };
+
+  const loadRecentAddresses = () => {
+    const storedJSON = localStorage.getItem(RECENT_ADDRESSES) || "[]";
+    const recentAddresses = JSON.parse(storedJSON);
+    return { recentAddresses };
+  };
+
   const signOut = () => {
     store.dispatch(logOut());
 
@@ -550,13 +756,28 @@ export const popupMessageListener = (request: Request) => {
   };
 
   const saveSettings = () => {
-    const { isDataSharingAllowed, isTestnet } = request;
+    const {
+      isDataSharingAllowed,
+      isTestnet,
+      isMemoValidationEnabled,
+      isSafetyValidationEnabled,
+    } = request;
 
     localStorage.setItem(DATA_SHARING_ID, JSON.stringify(isDataSharingAllowed));
     localStorage.setItem(IS_TESTNET_ID, JSON.stringify(isTestnet));
+    localStorage.setItem(
+      IS_VALIDATING_MEMO_ID,
+      JSON.stringify(isMemoValidationEnabled),
+    );
+    localStorage.setItem(
+      IS_VALIDATING_SAFETY_ID,
+      JSON.stringify(isSafetyValidationEnabled),
+    );
 
     return {
       isDataSharingAllowed,
+      isMemoValidationEnabled: getIsMemoValidationEnabled(),
+      isSafetyValidationEnabled: getIsSafetyValidationEnabled(),
       networkDetails: getNetworkDetails(isTestnet),
     };
   };
@@ -567,36 +788,40 @@ export const popupMessageListener = (request: Request) => {
 
     return {
       isDataSharingAllowed,
+      isMemoValidationEnabled: getIsMemoValidationEnabled(),
+      isSafetyValidationEnabled: getIsSafetyValidationEnabled(),
       networkDetails: getNetworkDetails(getIsTestnet()),
     };
   };
 
   const getCachedAssetIcon = () => {
-    const { assetCode } = request;
+    const { assetCanonical } = request;
 
     const assetIconCache = JSON.parse(
       localStorage.getItem(CACHED_ASSET_ICONS_ID) || "{}",
     );
 
     return {
-      iconUrl: assetIconCache[assetCode],
+      iconUrl: assetIconCache[assetCanonical] || "",
     };
   };
 
   const cacheAssetIcon = () => {
-    const { assetCode, iconUrl } = request;
+    const { assetCanonical, iconUrl } = request;
 
     const assetIconCache = JSON.parse(
       localStorage.getItem(CACHED_ASSET_ICONS_ID) || "{}",
     );
-    assetIconCache[assetCode] = iconUrl;
+    assetIconCache[assetCanonical] = iconUrl;
     localStorage.setItem(CACHED_ASSET_ICONS_ID, JSON.stringify(assetIconCache));
   };
 
   const messageResponder: MessageResponder = {
     [SERVICE_TYPES.CREATE_ACCOUNT]: createAccount,
+    [SERVICE_TYPES.FUND_ACCOUNT]: fundAccount,
     [SERVICE_TYPES.ADD_ACCOUNT]: addAccount,
     [SERVICE_TYPES.IMPORT_ACCOUNT]: importAccount,
+    [SERVICE_TYPES.IMPORT_HARDWARE_WALLET]: importHardwareWallet,
     [SERVICE_TYPES.LOAD_ACCOUNT]: loadAccount,
     [SERVICE_TYPES.MAKE_ACCOUNT_ACTIVE]: makeAccountActive,
     [SERVICE_TYPES.UPDATE_ACCOUNT_NAME]: updateAccountName,
@@ -607,7 +832,11 @@ export const popupMessageListener = (request: Request) => {
     [SERVICE_TYPES.GRANT_ACCESS]: grantAccess,
     [SERVICE_TYPES.REJECT_ACCESS]: rejectAccess,
     [SERVICE_TYPES.SIGN_TRANSACTION]: signTransaction,
+    [SERVICE_TYPES.HANDLE_SIGNED_HW_TRANSACTION]: handleSignedHwTransaction,
     [SERVICE_TYPES.REJECT_TRANSACTION]: rejectTransaction,
+    [SERVICE_TYPES.SIGN_FREIGHTER_TRANSACTION]: signFreighterTransaction,
+    [SERVICE_TYPES.ADD_RECENT_ADDRESS]: addRecentAddress,
+    [SERVICE_TYPES.LOAD_RECENT_ADDRESSES]: loadRecentAddresses,
     [SERVICE_TYPES.SIGN_OUT]: signOut,
     [SERVICE_TYPES.SHOW_BACKUP_PHRASE]: showBackupPhrase,
     [SERVICE_TYPES.SAVE_SETTINGS]: saveSettings,

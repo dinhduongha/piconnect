@@ -1,3 +1,173 @@
+# Release notes - Wallets - Version 2.4.1
+
+### Bug
+
+Disable Sentry tracking if Anonymous Data Sharing is not allowed
+
+### Story
+
+Update settings copy for stellar.expert validation
+
+# Release notes - Wallets - Version 2.4.0
+
+### Bug
+
+Rename "native" to "XLM" on LP shares
+
+LP shares should be listed after all other assets
+
+Fees are displayed in scientific notation
+
+Asset "Send" and "Swap" should default to that asset
+
+Before displaying the asset name, it briefly flashes "Stellar Network"
+
+show create account ops in account history under "sent" column
+
+large decimals turn amount to exponential notation, causing error in send flow
+
+Include hover states to the bottom bar menu buttons
+
+Make sure user can't re-view mnemonic phrase after creating account
+
+### Story
+
+WalletConnect technical evaluation
+
+Show swaps in history
+
+Display error details for all errors
+
+Display LP shares in the app
+
+Allow Freighter to interact with applications that use https only
+
+Display asset balance details
+
+# Release notes - Wallets - Version 2.3.0
+
+### Bug
+
+handle rejected tx from ledger error message
+
+\[Ledger\] Replace tx rejected error messages
+
+\[Ledger\] fix bug when logging out and in with ledger, then sending transaction
+
+transaction fee denominated in XLM always
+
+### Story
+
+Address demonic vulnerability
+
+Structure to support localization
+
+Change links on the about page
+
+Connect using Ledger
+
+# Release notes - Version 2.2.1
+
+### Bug
+
+- fix bug when going to swap screen with no trustlines
+
+# Release notes - Version 2.2.0
+
+### Bug
+
+- Ajustments to the pull up menu
+
+- After completing a swap and doing it again, when selecting asset the images
+  won't load
+
+- Images are displaying the "no image" icon while loading. They should display
+  the loader state
+
+- Fix width and paddings on the account creation yellow box
+
+- In clickable items, allow the user to click on the entire line, not only on
+  the arrow
+
+### Story
+
+- Ask the user to pin the extension after installation \(update image\)
+
+- Update "Offered by" field in the Chrome web store
+
+- Update placeholder text of the manual asset add field
+
+- Remove network tag from onboarding screens
+
+- Allow the user to select a key when signing and verify if the user has the
+  required key requested by the app
+
+- Set recommended fee as default when sending a payment
+
+- Allow swapping assets using Path Payments
+
+# v2.1.2
+
+- Protocol 19 update
+- Add tracking for new features
+- Filter out LP shares from balances
+
+**Bug Fixes:**
+
+- Better asset icon handling
+- Path Payment starting at 0 error
+- Default to "recommended fee" in payment
+
+# v2.0.0
+
+- UI revamp
+- Added managing trustlines
+- Added send payments/path payments
+
+# v1.2.0
+
+**Bug Fixes:**
+
+- Fix multi line operations in Account History
+- Add Lumenswap logo to footer
+
+# v1.1.5
+
+**Bug Fixes:**
+
+- Fixed scrollbar issue on Settings subview:
+  https://github.com/stellar/freighter/issues/281
+- Update @stellar/wallet-sdk so liquidity pool shares don't break asset balances
+
+# v1.1.4
+
+**Bug Fixes:**
+
+- Fixed scrollbar issue: https://github.com/stellar/freighter/issues/268
+
+**Updates:**
+
+- Added Protocol 18 Support
+
+# v1.1.3
+
+- Parse non-latin characters correctly
+
+# v1.1.2
+
+- Add labels for Protocol 17 operations
+- Update copy
+
+# v1.1.1
+
+- Add support for Fee Bump transactions
+
+# v1.1.0
+
+- Allow users to toggle between Mainnet and Testnet
+- Allow Claimable Balances and Sponsorship operations
+- Allow users to toggle stellar.expert checks
+
 # v1.0.9
 
 - Show all assets held by an account

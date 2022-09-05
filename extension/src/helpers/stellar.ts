@@ -1,26 +1,50 @@
+import BigNumber from "bignumber.js";
+import StellarSdk from "stellar-sdk";
+
 import { parsedSearchParam, getUrlHostname } from "./urls";
 
+const truncateString = (str: string) =>
+  str ? `${str.slice(0, 4)}…${str.slice(-4)}` : "";
+
 export const truncatedPublicKey = (publicKey: string) =>
-  publicKey ? `${publicKey.slice(0, 4)}…${publicKey.slice(-4)}` : "";
+  truncateString(publicKey);
+
+export const truncatedFedAddress = (addr: string) => {
+  if (!addr || addr.indexOf("*") === -1) {
+    return addr;
+  }
+  const domain = addr.split("*")[1];
+  return `${addr[0]}...*${domain}`;
+};
+
+export const truncatedPoolId = (poolId: string) => truncateString(poolId);
 
 export const getTransactionInfo = (search: string) => {
   const transactionInfo = parsedSearchParam(search);
 
   const {
+    accountToSign,
     url,
     transaction,
+    transactionXdr,
     isDomainListedAllowed,
     flaggedKeys,
+    tab: { title = "" },
   } = transactionInfo;
   const hostname = getUrlHostname(url);
+  const isHttpsDomain = url.startsWith("https");
   const { _operations = [] } = transaction;
   const operationTypes = _operations.map(
     (operation: { type: string }) => operation.type,
   );
 
   return {
+    accountToSign,
     transaction,
+    transactionXdr,
     domain: hostname,
+    domainTitle: title,
+    isHttpsDomain,
     operations: _operations,
     operationTypes,
     isDomainListedAllowed,
@@ -28,4 +52,60 @@ export const getTransactionInfo = (search: string) => {
   };
 };
 
-export const stroopToXlm = (stroop: number) => stroop / 10000000;
+export const getAssetFromCanonical = (canonical: string) => {
+  if (canonical === "native") {
+    // return StellarSdk.Asset.native();
+    return "PI";
+  }
+  if (canonical.includes(":")) {
+    return new StellarSdk.Asset(
+      canonical.split(":")[0],
+      canonical.split(":")[1],
+    );
+  }
+  throw new Error(`invalid asset canonical id: ${canonical}`);
+};
+
+export const getCanonicalFromAsset = (
+  assetCode: string,
+  assetIssuer: string,
+) => {
+  if (assetCode === "PI" && !assetIssuer) {
+    return "native";
+  }
+  return `${assetCode}:${assetIssuer}`;
+};
+
+export const stroopToXlm = (
+  stroops: BigNumber | string | number,
+): BigNumber => {
+  if (stroops instanceof BigNumber) {
+    return stroops.dividedBy(1e7);
+  }
+  return new BigNumber(Number(stroops) / 1e7);
+};
+
+export const xlmToStroop = (lumens: BigNumber | string): BigNumber => {
+  if (lumens instanceof BigNumber) {
+    return lumens.times(1e7);
+  }
+  // round to nearest stroop
+  return new BigNumber(Math.round(Number(lumens) * 1e7));
+};
+
+export const getConversionRate = (
+  sourceAmount: string,
+  destAmount: string,
+): BigNumber => new BigNumber(destAmount).div(new BigNumber(sourceAmount));
+
+export const formatDomain = (domain: string) => {
+  if (domain) {
+    domain.replace("https://", "").replace("www.", "");
+    return domain;
+  }
+  return "Pi Network";
+};
+
+export const isMuxedAccount = (publicKey: string) => publicKey.startsWith("M");
+
+export const isFederationAddress = (address: string) => address.includes("*");

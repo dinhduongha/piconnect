@@ -1,5 +1,6 @@
 const webpack = require("webpack");
 const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
+const ModuleReplaceWebpackPlugin = require("module-replace-webpack-plugin");
 const path = require("path");
 const { DEFAULT_STATS } = require("../../config/webpack");
 
@@ -12,7 +13,7 @@ const config = {
   devtool: "source-map",
   output: {
     globalObject: "this",
-    library: "freighter-api",
+    library: "freighterApi",
     libraryTarget: "umd",
     path: BUILD_PATH,
     filename: "[name].min.js",
@@ -39,6 +40,14 @@ const config = {
   plugins: [
     new webpack.DefinePlugin({
       DEV_SERVER: false,
+    }),
+    new ModuleReplaceWebpackPlugin({
+      modules: [
+        {
+          test: /webextension-polyfill-ts/,
+          replace: "../../config/shims/webextension-polyfill.ts",
+        },
+      ],
     }),
   ],
   stats: DEFAULT_STATS,

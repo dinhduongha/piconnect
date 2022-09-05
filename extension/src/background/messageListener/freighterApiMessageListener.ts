@@ -6,15 +6,23 @@ import { MessageResponder } from "background/types";
 import { FlaggedKeys, TransactionInfo } from "types/transactions";
 
 import { EXTERNAL_SERVICE_TYPES } from "@shared/constants/services";
-import { getNetworkDetails } from "@shared/helpers/stellar";
+import {
+  getNetworkDetails,
+  MAINNET_NETWORK_DETAILS,
+} from "@shared/helpers/stellar";
 import { STELLAR_DIRECTORY_URL } from "background/constants/apiUrls";
-import { POPUP_WIDTH } from "constants/dimensions";
+import { POPUP_HEIGHT, POPUP_WIDTH } from "constants/dimensions";
 import { ALLOWLIST_ID } from "constants/localStorageTypes";
 import { TRANSACTION_WARNING } from "constants/transaction";
 
-import { getIsTestnet } from "background/helpers/account";
+import {
+  getIsTestnet,
+  getIsMemoValidationEnabled,
+  getIsSafetyValidationEnabled,
+} from "background/helpers/account";
+import { isSenderAllowed } from "background/helpers/allowListAuthorization";
 import { cachedFetch } from "background/helpers/cachedFetch";
-import { getUrlHostname, getPunycodedDomain } from "helpers/urls";
+import { encodeObject, getUrlHostname, getPunycodedDomain } from "helpers/urls";
 
 import { store } from "background/store";
 import { publicKeySelector } from "background/ducks/session";
@@ -30,7 +38,7 @@ interface WINDOW_PARAMS {
 const WINDOW_SETTINGS: WINDOW_PARAMS = {
   type: "popup",
   width: POPUP_WIDTH,
-  height: 667,
+  height: POPUP_HEIGHT + 32, // include browser frame height,
 };
 
 export const freighterApiMessageListener = (
@@ -38,21 +46,18 @@ export const freighterApiMessageListener = (
   sender: Runtime.MessageSender,
 ) => {
   const requestAccess = () => {
-    // TODO: add check to make sure this origin is on allowlist
-    const allowListStr = localStorage.getItem(ALLOWLIST_ID) || "";
-    const allowList = allowListStr.split(",");
     const publicKey = publicKeySelector(store.getState());
 
     const { tab, url: tabUrl = "" } = sender;
-    const domain = getUrlHostname(tabUrl);
 
-    if (allowList.includes(getPunycodedDomain(domain)) && publicKey) {
+    if (isSenderAllowed({ sender }) && publicKey) {
       // okay, the requester checks out and we have public key, send it
       return { publicKey };
     }
 
     // otherwise, we need to confirm either url or password. Maybe both
-    const encodeOrigin = btoa(JSON.stringify({ tab, url: tabUrl }));
+    const encodeOrigin = encodeObject({ tab, url: tabUrl });
+
     browser.windows.create({
       url: chrome.runtime.getURL(`/index.html#/grant-access?${encodeOrigin}`),
       ...WINDOW_SETTINGS,
@@ -74,13 +79,18 @@ export const freighterApiMessageListener = (
   };
 
   const submitTransaction = async () => {
-    const { transactionXdr } = request;
-    const { networkUrl, networkPassphrase } = getNetworkDetails(getIsTestnet());
+    const { transactionXdr, network: _network, accountToSign } = request;
+    const network = _network ?? MAINNET_NETWORK_DETAILS.network;
+    const isTestnet = getIsTestnet();
+    const { networkUrl, networkPassphrase } = getNetworkDetails(isTestnet);
     const transaction = StellarSdk.TransactionBuilder.fromXDR(
       transactionXdr,
       networkPassphrase,
     );
-
+    if (network && network !== "PUBLIC" && network !== "TESTNET") {
+      const error = `Network must be PUBLIC or TESTNET`;
+      throw error;
+    }
     const { tab, url: tabUrl = "" } = sender;
     const domain = getUrlHostname(tabUrl);
     const punycodedDomain = getPunycodedDomain(domain);
@@ -88,30 +98,51 @@ export const freighterApiMessageListener = (
     const allowListStr = localStorage.getItem(ALLOWLIST_ID) || "";
     const allowList = allowListStr.split(",");
 
-    const isDomainListedAllowed = allowList.includes(punycodedDomain);
+    const isDomainListedAllowed = isSenderAllowed({ sender });
 
     const directoryLookupJson = await cachedFetch(STELLAR_DIRECTORY_URL);
     const accountData = directoryLookupJson?._embedded?.records || [];
 
-    const { _operations } = transaction;
+    const _operations =
+      transaction._operations || transaction._innerTransaction._operations;
 
     const flaggedKeys: FlaggedKeys = {};
 
-    _operations.forEach((operation: { destination: string }) => {
-      accountData.forEach(
-        ({ address, tags }: { address: string; tags: Array<string> }) => {
-          if (address === operation.destination) {
-            flaggedKeys[operation.destination] = {
-              ...flaggedKeys[operation.destination],
-              tags,
-            };
-          }
-        },
-      );
-    });
+    const isValidatingMemo = getIsMemoValidationEnabled() && !isTestnet;
+    const isValidatingSafety = getIsSafetyValidationEnabled() && !isTestnet;
+
+    if (isValidatingMemo || isValidatingSafety) {
+      _operations.forEach((operation: { destination: string }) => {
+        accountData.forEach(
+          ({ address, tags }: { address: string; tags: Array<string> }) => {
+            if (address === operation.destination) {
+              let collectedTags = [...tags];
+
+              /* if the user has opted out of validation, remove applicable tags */
+              if (!isValidatingMemo) {
+                collectedTags.filter(
+                  (tag) => tag !== TRANSACTION_WARNING.memoRequired,
+                );
+              }
+              if (!isValidatingSafety) {
+                collectedTags = collectedTags.filter(
+                  (tag) => tag !== TRANSACTION_WARNING.unsafe,
+                );
+                collectedTags = collectedTags.filter(
+                  (tag) => tag !== TRANSACTION_WARNING.malicious,
+                );
+              }
+              flaggedKeys[operation.destination] = {
+                ...flaggedKeys[operation.destination],
+                tags: collectedTags,
+              };
+            }
+          },
+        );
+      });
+    }
 
     const server = new StellarSdk.Server(networkUrl);
-
     try {
       await server.checkMemoRequired(transaction);
     } catch (e) {
@@ -123,15 +154,17 @@ export const freighterApiMessageListener = (
 
     const transactionInfo = {
       transaction,
+      transactionXdr,
       tab,
       isDomainListedAllowed,
       url: tabUrl,
       flaggedKeys,
+      accountToSign,
     } as TransactionInfo;
 
     transactionQueue.push(transaction);
 
-    const encodetransactionInfo = btoa(JSON.stringify(transactionInfo));
+    const encodetransactionInfo = encodeObject(transactionInfo);
 
     const popup = browser.windows.create({
       url: chrome.runtime.getURL(
@@ -166,9 +199,22 @@ export const freighterApiMessageListener = (
     });
   };
 
+  const requestNetwork = () => {
+    let network = "";
+
+    try {
+      ({ network } = getNetworkDetails(getIsTestnet()));
+    } catch (error) {
+      console.error(error);
+      return { error };
+    }
+    return { network };
+  };
+
   const messageResponder: MessageResponder = {
     [EXTERNAL_SERVICE_TYPES.REQUEST_ACCESS]: requestAccess,
     [EXTERNAL_SERVICE_TYPES.SUBMIT_TRANSACTION]: submitTransaction,
+    [EXTERNAL_SERVICE_TYPES.REQUEST_NETWORK]: requestNetwork,
   };
 
   return messageResponder[request.type]();

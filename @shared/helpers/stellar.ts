@@ -1,7 +1,5 @@
 import StellarSdk from "stellar-sdk";
-
-const TESTNET = "Pi Testnet";
-const PUBNET = "PI TESTNET";
+import { NETWORKS, NETWORK_NAMES } from "../constants/stellar";
 
 export interface NetworkDetails {
   isTestnet: boolean;
@@ -16,18 +14,18 @@ export interface NetworkDetails {
 
 export const MAINNET_NETWORK_DETAILS = {
   isTestnet: false,
-  network: "PUBLIC",
-  networkName: PUBNET,
-  otherNetworkName: TESTNET,
-  networkUrl: "https://api.testnet.minepi.com",
-  networkPassphrase: "Pi Testnet",
+  network: NETWORKS.PUBLIC,
+  networkName: NETWORK_NAMES.PUBNET,
+  otherNetworkName: NETWORK_NAMES.TESTNET,
+  networkUrl: "https://api.mainnet.minepi.com",
+  networkPassphrase: "Pi Mainnet",
 } as NetworkDetails;
 
 export const TESTNET_NETWORK_DETAILS = {
   isTestnet: true,
-  network: "TESTNET",
-  networkName: TESTNET,
-  otherNetworkName: PUBNET,
+  network: NETWORKS.TESTNET,
+  networkName: NETWORK_NAMES.TESTNET,
+  otherNetworkName: NETWORK_NAMES.PUBNET,
   networkUrl: "https://api.testnet.minepi.com",
   networkPassphrase: "Pi Testnet",
 } as NetworkDetails;
