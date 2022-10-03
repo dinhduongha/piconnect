@@ -6,19 +6,17 @@ import { MessageResponder } from "background/types";
 import { FlaggedKeys, TransactionInfo } from "types/transactions";
 
 import { EXTERNAL_SERVICE_TYPES } from "@shared/constants/services";
-import {
-  getNetworkDetails,
-  MAINNET_NETWORK_DETAILS,
-} from "@shared/helpers/stellar";
+import { MAINNET_NETWORK_DETAILS } from "@shared/constants/stellar";
 import { STELLAR_DIRECTORY_URL } from "background/constants/apiUrls";
 import { POPUP_HEIGHT, POPUP_WIDTH } from "constants/dimensions";
 import { ALLOWLIST_ID } from "constants/localStorageTypes";
 import { TRANSACTION_WARNING } from "constants/transaction";
 
 import {
-  getIsTestnet,
+  getIsMainnet,
   getIsMemoValidationEnabled,
   getIsSafetyValidationEnabled,
+  getNetworkDetails,
 } from "background/helpers/account";
 import { isSenderAllowed } from "background/helpers/allowListAuthorization";
 import { cachedFetch } from "background/helpers/cachedFetch";
@@ -81,8 +79,8 @@ export const freighterApiMessageListener = (
   const submitTransaction = async () => {
     const { transactionXdr, network: _network, accountToSign } = request;
     const network = _network ?? MAINNET_NETWORK_DETAILS.network;
-    const isTestnet = getIsTestnet();
-    const { networkUrl, networkPassphrase } = getNetworkDetails(isTestnet);
+    const isMainnet = getIsMainnet();
+    const { networkUrl, networkPassphrase } = getNetworkDetails();
     const transaction = StellarSdk.TransactionBuilder.fromXDR(
       transactionXdr,
       networkPassphrase,
@@ -108,8 +106,8 @@ export const freighterApiMessageListener = (
 
     const flaggedKeys: FlaggedKeys = {};
 
-    const isValidatingMemo = getIsMemoValidationEnabled() && !isTestnet;
-    const isValidatingSafety = getIsSafetyValidationEnabled() && !isTestnet;
+    const isValidatingMemo = getIsMemoValidationEnabled() && isMainnet;
+    const isValidatingSafety = getIsSafetyValidationEnabled() && isMainnet;
 
     if (isValidatingMemo || isValidatingSafety) {
       _operations.forEach((operation: { destination: string }) => {
@@ -203,7 +201,7 @@ export const freighterApiMessageListener = (
     let network = "";
 
     try {
-      ({ network } = getNetworkDetails(getIsTestnet()));
+      ({ network } = getNetworkDetails());
     } catch (error) {
       console.error(error);
       return { error };

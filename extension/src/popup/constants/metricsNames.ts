@@ -57,6 +57,11 @@ export const METRIC_NAMES = {
   viewSearchAsset: "loaded screen: search asset",
   viewTrustlineError: "loaded screen: trustline error",
 
+  viewManageNetwork: "loaded screen: manage network",
+  viewAddNetwork: "loaded screen: add network",
+  viewEditNetwork: "loaded screen: edit network",
+  viewNetworkSettings: "loaded screen: network settings",
+
   manageAssetAddAsset: "manage asset: add asset",
   manageAssetRemoveAsset: "manage asset: remove asset",
   manageAssetError: "manage asset: error",
@@ -108,5 +113,5 @@ export const METRIC_NAMES = {
 
   viewPublicKeyAccountRenamed: "viewPublicKey: renamed account",
   viewPublicKeyCopy: "viewPublicKey: copied public key",
-  viewPublicKeyClickedStellarExpert: "viewPublicKey: clicked PiQuorum",
+  viewPublicKeyClickedStellarExpert: "viewPublicKey: clicked MinePi",
 };

@@ -219,7 +219,7 @@ export const SendTo = ({ previous }: { previous: ROUTES }) => {
           autoComplete="off"
           id="destination-input"
           name="destination"
-          placeholder={t("Recipient Pi Network address")}
+          placeholder={t("Recipient address")}
           onChange={formik.handleChange}
           value={formik.values.destination}
         />
