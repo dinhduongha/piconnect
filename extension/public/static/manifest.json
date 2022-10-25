@@ -1,7 +1,7 @@
 {
   "name": "PiConnect",
-  "version": "2.5.0",
-  "version_name": "2.5.0",
+  "version": "2.6.0",
+  "version_name": "2.6.0",
   "description": "PiConnect is a non-custodial wallet extension that enables you to sign Pi Network transactions via your browser.",
   "browser_specific_settings": {
     "gecko": {

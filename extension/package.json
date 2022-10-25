@@ -1,6 +1,6 @@
 {
   "name": "extension",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "license": "Apache-2.0",
   "prettier": "@stellar/prettier-config",
   "scripts": {
@@ -71,6 +71,7 @@
     "sass": "^1.22.10",
     "sass-loader": "8.0.0",
     "simplebar-react": "^2.3.6",
+    "soroban-sdk": "^1.0.2",
     "stellar-hd-wallet": "https://github.com/piconnectdev/stellar-hd-wallet",
     "stellar-identicon-js": "^1.0.0",
     "stellar-sdk": "https://github.com/piconnectdev/js-stellar-sdk",
